@@ -1,35 +1,107 @@
+
+# Single, modular Cloud Build that runs only targets listed in _TARGETS.
+# Safe placeholder version: only "echo", so it won't fail while wiring things up.
+
+timeout: 60m
 options:
   logging: CLOUD_LOGGING_ONLY
+  substitutionOption: ALLOW_LOOSE
+
 substitutions:
-  _REGION: "europe-central2"
-  _AR_REPO: "apps"
-  _IMAGE: "hello-build"
+  _TARGETS: "frontend,backend"   # default; UI can override
 
 steps:
-  - name: gcr.io/cloud-builders/docker
-    args:
-      [
-        "build","-t",
-        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE}:$SHORT_SHA",
-        "."
-      ]
-    env:
-      - "COMMIT_SHA=$SHORT_SHA"
 
-  - name: gcr.io/cloud-builders/docker
-    args:
-      [
-        "push",
-        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE}:$SHORT_SHA"
-      ]
+# 0) context info
+- id: "context"
+  name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |
+      echo "PROJECT_ID: ${PROJECT_ID}"
+      echo "_TARGETS   : ${_TARGETS}"
+      echo "BRANCH_NAME: ${BRANCH_NAME:-n/a}"
+      echo "SHORT_SHA  : ${SHORT_SHA:-n/a}"
 
-  - name: gcr.io/cloud-builders/gcloud
-    entrypoint: bash
-    args:
-      - -lc
-      - |
-        echo "Image pushed:"
-        echo "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE}:$SHORT_SHA"
+# 1) FRONTEND
+- id: "frontend"
+  name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |
+      if [[ ",${_TARGETS}," == *",frontend,"* ]]; then
+        echo "=== FRONTEND selected ==="
+        # TODO: replace the next lines with your real build/deploy (docker/Cloud Run/etc)
+        echo "[frontend] building..."
+        echo "[frontend] deploying..."
+        echo "[frontend] done."
+      else
+        echo "skip frontend"
+      fi
 
-images:
-  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE}:$SHORT_SHA"
+# 2) BACKEND
+- id: "backend"
+  name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |
+      if [[ ",${_TARGETS}," == *",backend,"* ]]; then
+        echo "=== BACKEND selected ==="
+        # TODO: replace with real backend pipeline
+        echo "[backend] building..."
+        echo "[backend] deploying..."
+        echo "[backend] done."
+      else
+        echo "skip backend"
+      fi
+
+# 3) GITEA
+- id: "gitea"
+  name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |
+      if [[ ",${_TARGETS}," == *",gitea,"* ]]; then
+        echo "=== GITEA selected ==="
+        # TODO: hook to your gitea deploy scripts (helm/terraform/bash)
+        echo "[gitea] setup..."
+        echo "[gitea] done."
+      else
+        echo "skip gitea"
+      fi
+
+# 4) CONFLUENCE
+- id: "confluence"
+  name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |
+      if [[ ",${_TARGETS}," == *",confluence,"* ]]; then
+        echo "=== CONFLUENCE selected ==="
+        # TODO: hook to your confluence deploy steps
+        echo "[confluence] setup..."
+        echo "[confluence] done."
+      else
+        echo "skip confluence"
+      fi
+
+# 5) JIRA
+- id: "jira"
+  name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |
+      if [[ ",${_TARGETS}," == *",jira,"* ]]; then
+        echo "=== JIRA selected ==="
+        # TODO: hook to your jira deploy steps
+        echo "[jira] setup..."
+        echo "[jira] done."
+      else
+        echo "skip jira"
+      fi
