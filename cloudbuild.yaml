@@ -1,156 +1,194 @@
 # Single, modular Cloud Build with live step progress callbacks to _PROGRESS_URL
-
 timeout: 60m
 options:
   logging: CLOUD_LOGGING_ONLY
   substitutionOption: ALLOW_LOOSE
 
 substitutions:
-  _TARGETS: "frontend,backend"           # UI/orchestrator poate suprascrie
-  _PROGRESS_URL: ""                      # ex: https://orchestrator-xxxxx-ew.a.run.app
+  _TARGETS: "frontend,backend"
+  _PROGRESS_URL: "https://orchestrator-842293902146.europe-west1.run.app"  # <- URL-ul tău
 
 steps:
 
-# 0) context info
-- id: "context"
-  name: "gcr.io/cloud-builders/gcloud"
-  entrypoint: "bash"
+# 0) context
+- id: context
+  name: gcr.io/cloud-builders/gcloud
+  entrypoint: bash
   args:
-    - "-c"
+    - -c
     - |
-      set -e
-      echo "PROJECT_ID : ${PROJECT_ID}"
+      echo "PROJECT_ID: ${PROJECT_ID}"
       echo "_TARGETS   : ${_TARGETS}"
       echo "_PROGRESS  : ${_PROGRESS_URL}"
-      echo "BRANCH_NAME: ${BRANCH_NAME:-n/a}"
+      echo "BRANCH     : ${BRANCH_NAME:-n/a}"
       echo "SHORT_SHA  : ${SHORT_SHA:-n/a}"
 
-# helper func în shell pentru ping progres
-- id: "helper:init"
-  name: "gcr.io/cloud-builders/gcloud"
-  entrypoint: "bash"
-  args:
-    - "-c"
-    - |
-      cat <<'EOF' > /workspace/progress.sh
-      #!/usr/bin/env bash
-      set -e
-      STEP="$1"; STATUS="$2"
-      if [[ -n "${_PROGRESS_URL}" ]]; then
-        BUILD_ID="${BUILD_ID:-unknown}"
-        curl -s -m 5 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=${STEP}&status=${STATUS}" || true
-      fi
-      EOF
-      chmod +x /workspace/progress.sh
-
+########################
 # 1) FRONTEND
-- id: "frontend"
-  name: "gcr.io/cloud-builders/gcloud"
-  entrypoint: "bash"
+########################
+- id: notify-frontend-start
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
   args:
-    - "-c"
-    - |
-      set -e
-      trap '/workspace/progress.sh frontend FAIL' ERR
-      /workspace/progress.sh frontend START
+    - -sS
+    - -X
+    - POST
+    - ${_PROGRESS_URL}/progress?op=$BUILD_ID&step=frontend&status=START
+  waitFor: ['-']
 
+- id: frontend
+  name: gcr.io/cloud-builders/gcloud
+  entrypoint: bash
+  args:
+    - -c
+    - |
       if [[ ",${_TARGETS}," == *",frontend,"* ]]; then
         echo "=== FRONTEND selected ==="
-        # TODO: înlocuiește cu build/deploy real:
         echo "[frontend] building..."
+        sleep 2
         echo "[frontend] deploying..."
+        sleep 2
         echo "[frontend] done."
       else
         echo "skip frontend"
       fi
 
-      /workspace/progress.sh frontend DONE
-
-# 2) BACKEND
-- id: "backend"
-  name: "gcr.io/cloud-builders/gcloud"
-  entrypoint: "bash"
+- id: notify-frontend-done
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
   args:
-    - "-c"
-    - |
-      set -e
-      trap '/workspace/progress.sh backend FAIL' ERR
-      /workspace/progress.sh backend START
+    - -sS
+    - -X
+    - POST
+    - ${_PROGRESS_URL}/progress?op=$BUILD_ID&step=frontend&status=DONE
+  waitFor: ['frontend']
 
+########################
+# 2) BACKEND
+########################
+- id: notify-backend-start
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
+  args:
+    - -sS
+    - -X
+    - POST
+    - ${_PROGRESS_URL}/progress?op=$BUILD_ID&step=backend&status=START
+  waitFor: ['frontend']   # rulează după frontend (doar ca exemplu)
+
+- id: backend
+  name: gcr.io/cloud-builders/gcloud
+  entrypoint: bash
+  args:
+    - -c
+    - |
       if [[ ",${_TARGETS}," == *",backend,"* ]]; then
         echo "=== BACKEND selected ==="
-        # TODO: înlocuiește cu build/deploy real:
         echo "[backend] building..."
+        sleep 2
         echo "[backend] deploying..."
+        sleep 2
         echo "[backend] done."
       else
         echo "skip backend"
       fi
 
-      /workspace/progress.sh backend DONE
-
-# 3) GITEA
-- id: "gitea"
-  name: "gcr.io/cloud-builders/gcloud"
-  entrypoint: "bash"
+- id: notify-backend-done
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
   args:
-    - "-c"
-    - |
-      set -e
-      trap '/workspace/progress.sh gitea FAIL' ERR
-      /workspace/progress.sh gitea START
+    - -sS
+    - -X
+    - POST
+    - ${_PROGRESS_URL}/progress?op=$BUILD_ID&step=backend&status=DONE
+  waitFor: ['backend']
 
+########################
+# 3) GITEA
+########################
+- id: notify-gitea-start
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
+  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=gitea&status=START']
+  waitFor: ['backend']
+
+- id: gitea
+  name: gcr.io/cloud-builders/gcloud
+  entrypoint: bash
+  args:
+    - -c
+    - |
       if [[ ",${_TARGETS}," == *",gitea,"* ]]; then
         echo "=== GITEA selected ==="
-        # TODO: deploy real (helm/terraform/etc):
         echo "[gitea] setup..."
+        sleep 2
         echo "[gitea] done."
       else
         echo "skip gitea"
       fi
 
-      /workspace/progress.sh gitea DONE
+- id: notify-gitea-done
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
+  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=gitea&status=DONE']
+  waitFor: ['gitea']
 
+########################
 # 4) CONFLUENCE
-- id: "confluence"
-  name: "gcr.io/cloud-builders/gcloud"
-  entrypoint: "bash"
-  args:
-    - "-c"
-    - |
-      set -e
-      trap '/workspace/progress.sh confluence FAIL' ERR
-      /workspace/progress.sh confluence START
+########################
+- id: notify-confluence-start
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
+  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=confluence&status=START']
+  waitFor: ['gitea']
 
+- id: confluence
+  name: gcr.io/cloud-builders/gcloud
+  entrypoint: bash
+  args:
+    - -c
+    - |
       if [[ ",${_TARGETS}," == *",confluence,"* ]]; then
         echo "=== CONFLUENCE selected ==="
-        # TODO: deploy real:
         echo "[confluence] setup..."
+        sleep 2
         echo "[confluence] done."
       else
         echo "skip confluence"
       fi
 
-      /workspace/progress.sh confluence DONE
+- id: notify-confluence-done
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
+  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=confluence&status=DONE']
+  waitFor: ['confluence']
 
+########################
 # 5) JIRA
-- id: "jira"
-  name: "gcr.io/cloud-builders/gcloud"
-  entrypoint: "bash"
-  args:
-    - "-c"
-    - |
-      set -e
-      trap '/workspace/progress.sh jira FAIL' ERR
-      /workspace/progress.sh jira START
+########################
+- id: notify-jira-start
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
+  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=jira&status=START']
+  waitFor: ['confluence']
 
+- id: jira
+  name: gcr.io/cloud-builders/gcloud
+  entrypoint: bash
+  args:
+    - -c
+    - |
       if [[ ",${_TARGETS}," == *",jira,"* ]]; then
         echo "=== JIRA selected ==="
-        # TODO: deploy real:
         echo "[jira] setup..."
+        sleep 2
         echo "[jira] done."
       else
         echo "skip jira"
       fi
 
-      /workspace/progress.sh jira DONE
+- id: notify-jira-done
+  name: gcr.io/cloud-builders/curl
+  entrypoint: curl
+  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=jira&status=DONE']
+  waitFor: ['jira']
