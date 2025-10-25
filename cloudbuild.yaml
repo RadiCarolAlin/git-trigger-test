@@ -5,8 +5,8 @@ options:
   substitutionOption: ALLOW_LOOSE
 
 substitutions:
-  _TARGETS: "frontend,backend"
-  _PROGRESS_URL: "https://orchestrator-842293902146.europe-west1.run.app"  # <- URL-ul tău
+  _TARGETS: "frontend,backend"                               # UI/Orchestrator poate suprascrie
+  _PROGRESS_URL: "http://host.docker.internal:5100"  # lasă gol dacă nu vrei callbacks
 
 steps:
 
@@ -17,23 +17,24 @@ steps:
   args:
     - -c
     - |
-      echo "PROJECT_ID: ${PROJECT_ID}"
-      echo "_TARGETS   : ${_TARGETS}"
-      echo "_PROGRESS  : ${_PROGRESS_URL}"
-      echo "BRANCH     : ${BRANCH_NAME:-n/a}"
-      echo "SHORT_SHA  : ${SHORT_SHA:-n/a}"
+      echo "PROJECT_ID : ${PROJECT_ID}"
+      echo "_TARGETS    : ${_TARGETS}"
+      echo "_PROGRESS_URL: ${_PROGRESS_URL:-<empty>}"
+      echo "BRANCH      : ${BRANCH_NAME:-n/a}"
+      echo "SHORT_SHA   : ${SHORT_SHA:-n/a}"
 
 ########################
 # 1) FRONTEND
 ########################
 - id: notify-frontend-start
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
+  name: curlimages/curl
+  entrypoint: sh
   args:
-    - -sS
-    - -X
-    - POST
-    - ${_PROGRESS_URL}/progress?op=$BUILD_ID&step=frontend&status=START
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",frontend,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=frontend&status=START" || true
+      fi
   waitFor: ['-']
 
 - id: frontend
@@ -54,27 +55,29 @@ steps:
       fi
 
 - id: notify-frontend-done
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
+  name: curlimages/curl
+  entrypoint: sh
   args:
-    - -sS
-    - -X
-    - POST
-    - ${_PROGRESS_URL}/progress?op=$BUILD_ID&step=frontend&status=DONE
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",frontend,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=frontend&status=DONE" || true
+      fi
   waitFor: ['frontend']
 
 ########################
 # 2) BACKEND
 ########################
 - id: notify-backend-start
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
+  name: curlimages/curl
+  entrypoint: sh
   args:
-    - -sS
-    - -X
-    - POST
-    - ${_PROGRESS_URL}/progress?op=$BUILD_ID&step=backend&status=START
-  waitFor: ['frontend']   # rulează după frontend (doar ca exemplu)
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",backend,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=backend&status=START" || true
+      fi
+  waitFor: ['frontend']
 
 - id: backend
   name: gcr.io/cloud-builders/gcloud
@@ -94,22 +97,28 @@ steps:
       fi
 
 - id: notify-backend-done
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
+  name: curlimages/curl
+  entrypoint: sh
   args:
-    - -sS
-    - -X
-    - POST
-    - ${_PROGRESS_URL}/progress?op=$BUILD_ID&step=backend&status=DONE
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",backend,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=backend&status=DONE" || true
+      fi
   waitFor: ['backend']
 
 ########################
 # 3) GITEA
 ########################
 - id: notify-gitea-start
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
-  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=gitea&status=START']
+  name: curlimages/curl
+  entrypoint: sh
+  args:
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",gitea,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=gitea&status=START" || true
+      fi
   waitFor: ['backend']
 
 - id: gitea
@@ -128,18 +137,28 @@ steps:
       fi
 
 - id: notify-gitea-done
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
-  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=gitea&status=DONE']
+  name: curlimages/curl
+  entrypoint: sh
+  args:
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",gitea,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=gitea&status=DONE" || true
+      fi
   waitFor: ['gitea']
 
 ########################
 # 4) CONFLUENCE
 ########################
 - id: notify-confluence-start
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
-  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=confluence&status=START']
+  name: curlimages/curl
+  entrypoint: sh
+  args:
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",confluence,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=confluence&status=START" || true
+      fi
   waitFor: ['gitea']
 
 - id: confluence
@@ -158,18 +177,28 @@ steps:
       fi
 
 - id: notify-confluence-done
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
-  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=confluence&status=DONE']
+  name: curlimages/curl
+  entrypoint: sh
+  args:
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",confluence,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=confluence&status=DONE" || true
+      fi
   waitFor: ['confluence']
 
 ########################
 # 5) JIRA
 ########################
 - id: notify-jira-start
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
-  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=jira&status=START']
+  name: curlimages/curl
+  entrypoint: sh
+  args:
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",jira,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=jira&status=START" || true
+      fi
   waitFor: ['confluence']
 
 - id: jira
@@ -188,7 +217,12 @@ steps:
       fi
 
 - id: notify-jira-done
-  name: gcr.io/cloud-builders/curl
-  entrypoint: curl
-  args: ['-sS','-X','POST','${_PROGRESS_URL}/progress?op=$BUILD_ID&step=jira&status=DONE']
+  name: curlimages/curl
+  entrypoint: sh
+  args:
+    - -c
+    - |
+      if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",jira,"; then
+        curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=jira&status=DONE" || true
+      fi
   waitFor: ['jira']
