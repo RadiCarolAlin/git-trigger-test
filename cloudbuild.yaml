@@ -1,6 +1,4 @@
-
-# Single, modular Cloud Build that runs only targets listed in _TARGETS.
-# Safe placeholder version: only "echo", so it won't fail while wiring things up.
+# Single, modular Cloud Build with live step progress callbacks to _PROGRESS_URL
 
 timeout: 60m
 options:
@@ -8,7 +6,8 @@ options:
   substitutionOption: ALLOW_LOOSE
 
 substitutions:
-  _TARGETS: "frontend,backend"   # default; UI can override
+  _TARGETS: "frontend,backend"           # UI/orchestrator poate suprascrie
+  _PROGRESS_URL: ""                      # ex: https://orchestrator-xxxxx-ew.a.run.app
 
 steps:
 
@@ -19,10 +18,30 @@ steps:
   args:
     - "-c"
     - |
-      echo "PROJECT_ID: ${PROJECT_ID}"
+      set -e
+      echo "PROJECT_ID : ${PROJECT_ID}"
       echo "_TARGETS   : ${_TARGETS}"
+      echo "_PROGRESS  : ${_PROGRESS_URL}"
       echo "BRANCH_NAME: ${BRANCH_NAME:-n/a}"
       echo "SHORT_SHA  : ${SHORT_SHA:-n/a}"
+
+# helper func în shell pentru ping progres
+- id: "helper:init"
+  name: "gcr.io/cloud-builders/gcloud"
+  entrypoint: "bash"
+  args:
+    - "-c"
+    - |
+      cat <<'EOF' > /workspace/progress.sh
+      #!/usr/bin/env bash
+      set -e
+      STEP="$1"; STATUS="$2"
+      if [[ -n "${_PROGRESS_URL}" ]]; then
+        BUILD_ID="${BUILD_ID:-unknown}"
+        curl -s -m 5 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=${STEP}&status=${STATUS}" || true
+      fi
+      EOF
+      chmod +x /workspace/progress.sh
 
 # 1) FRONTEND
 - id: "frontend"
@@ -31,15 +50,21 @@ steps:
   args:
     - "-c"
     - |
+      set -e
+      trap '/workspace/progress.sh frontend FAIL' ERR
+      /workspace/progress.sh frontend START
+
       if [[ ",${_TARGETS}," == *",frontend,"* ]]; then
         echo "=== FRONTEND selected ==="
-        # TODO: replace the next lines with your real build/deploy (docker/Cloud Run/etc)
+        # TODO: înlocuiește cu build/deploy real:
         echo "[frontend] building..."
         echo "[frontend] deploying..."
         echo "[frontend] done."
       else
         echo "skip frontend"
       fi
+
+      /workspace/progress.sh frontend DONE
 
 # 2) BACKEND
 - id: "backend"
@@ -48,15 +73,21 @@ steps:
   args:
     - "-c"
     - |
+      set -e
+      trap '/workspace/progress.sh backend FAIL' ERR
+      /workspace/progress.sh backend START
+
       if [[ ",${_TARGETS}," == *",backend,"* ]]; then
         echo "=== BACKEND selected ==="
-        # TODO: replace with real backend pipeline
+        # TODO: înlocuiește cu build/deploy real:
         echo "[backend] building..."
         echo "[backend] deploying..."
         echo "[backend] done."
       else
         echo "skip backend"
       fi
+
+      /workspace/progress.sh backend DONE
 
 # 3) GITEA
 - id: "gitea"
@@ -65,14 +96,20 @@ steps:
   args:
     - "-c"
     - |
+      set -e
+      trap '/workspace/progress.sh gitea FAIL' ERR
+      /workspace/progress.sh gitea START
+
       if [[ ",${_TARGETS}," == *",gitea,"* ]]; then
         echo "=== GITEA selected ==="
-        # TODO: hook to your gitea deploy scripts (helm/terraform/bash)
+        # TODO: deploy real (helm/terraform/etc):
         echo "[gitea] setup..."
         echo "[gitea] done."
       else
         echo "skip gitea"
       fi
+
+      /workspace/progress.sh gitea DONE
 
 # 4) CONFLUENCE
 - id: "confluence"
@@ -81,14 +118,20 @@ steps:
   args:
     - "-c"
     - |
+      set -e
+      trap '/workspace/progress.sh confluence FAIL' ERR
+      /workspace/progress.sh confluence START
+
       if [[ ",${_TARGETS}," == *",confluence,"* ]]; then
         echo "=== CONFLUENCE selected ==="
-        # TODO: hook to your confluence deploy steps
+        # TODO: deploy real:
         echo "[confluence] setup..."
         echo "[confluence] done."
       else
         echo "skip confluence"
       fi
+
+      /workspace/progress.sh confluence DONE
 
 # 5) JIRA
 - id: "jira"
@@ -97,11 +140,17 @@ steps:
   args:
     - "-c"
     - |
+      set -e
+      trap '/workspace/progress.sh jira FAIL' ERR
+      /workspace/progress.sh jira START
+
       if [[ ",${_TARGETS}," == *",jira,"* ]]; then
         echo "=== JIRA selected ==="
-        # TODO: hook to your jira deploy steps
+        # TODO: deploy real:
         echo "[jira] setup..."
         echo "[jira] done."
       else
         echo "skip jira"
       fi
+
+      /workspace/progress.sh jira DONE
