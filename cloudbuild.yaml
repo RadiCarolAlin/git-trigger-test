@@ -6,7 +6,8 @@ options:
 
 substitutions:
   _TARGETS: "frontend,backend"
-  _PROGRESS_URL: "https://orchestrator-842293902146.europe-west1.run.app"
+  _PROGRESS_URL: "https://maurita-unfaceted-prospectively.ngrok-free.dev"
+
 
 
 steps:
