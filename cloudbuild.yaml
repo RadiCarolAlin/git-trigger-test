@@ -5,8 +5,9 @@ options:
   substitutionOption: ALLOW_LOOSE
 
 substitutions:
-  _TARGETS: "frontend,backend"                               # UI/Orchestrator poate suprascrie
-  _PROGRESS_URL: "http://host.docker.internal:5100"  # lasă gol dacă nu vrei callbacks
+  _TARGETS: "frontend,backend"
+  _PROGRESS_URL: "https://orchestrator-842293902146.europe-west1.run.app"
+
 
 steps:
 
