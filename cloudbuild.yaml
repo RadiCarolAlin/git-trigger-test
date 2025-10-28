@@ -77,7 +77,6 @@ steps:
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",backend,"; then
           curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=backend&status=START" || true
         fi
-    # Pornește abia după ce am trimis DONE pentru frontend
     waitFor: ['notify-frontend-done']
 
   - id: backend
@@ -233,3 +232,87 @@ steps:
           curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=jira&status=DONE" || true
         fi
     waitFor: ['jira']
+
+  ########################
+  # 6) ARTIFACTORY (≈18s)
+  ########################
+  - id: notify-artifactory-start
+    name: curlimages/curl
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",artifactory,"; then
+          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=artifactory&status=START" || true
+        fi
+    waitFor: ['notify-jira-done']
+
+  - id: artifactory
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        if [[ ",${_TARGETS}," == *",artifactory,"* ]]; then
+          echo "=== ARTIFACTORY selected ==="
+          echo "[artifactory] building..."
+          sleep 9
+          echo "[artifactory] deploying..."
+          sleep 9
+          echo "[artifactory] done."
+        else
+          echo "skip artifactory"
+        fi
+
+  - id: notify-artifactory-done
+    name: curlimages/curl
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",artifactory,"; then
+          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=artifactory&status=DONE" || true
+        fi
+    waitFor: ['artifactory']
+
+  ########################
+  # 7) GITHUB (≈18s)
+  ########################
+  - id: notify-github-start
+    name: curlimages/curl
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",github,"; then
+          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=github&status=START" || true
+        fi
+    waitFor: ['notify-artifactory-done']
+
+  - id: github
+    name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        if [[ ",${_TARGETS}," == *",github,"* ]]; then
+          echo "=== GITHUB selected ==="
+          echo "[github] building..."
+          sleep 9
+          echo "[github] deploying..."
+          sleep 9
+          echo "[github] done."
+        else
+          echo "skip github"
+        fi
+
+  - id: notify-github-done
+    name: curlimages/curl
+    entrypoint: sh
+    args:
+      - -c
+      - |
+        if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",github,"; then
+          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=github&status=DONE" || true
+        fi
+    waitFor: ['github']
