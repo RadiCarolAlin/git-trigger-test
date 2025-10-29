@@ -1,5 +1,5 @@
 # cloudbuild.yaml
-# Single, modular Cloud Build with live step progress callbacks to _PROGRESS_URL
+# Modular Cloud Build with action support: deploy_platform, add_app, remove_app
 timeout: 60m
 options:
   logging: CLOUD_LOGGING_ONLY
@@ -7,6 +7,7 @@ options:
 
 substitutions:
   _TARGETS: "frontend,backend"
+  _ACTION: "deploy_platform"  # deploy_platform | add_app | remove_app
   _PROGRESS_URL: "https://maurita-unfaceted-prospectively.ngrok-free.dev"
 
 steps:
@@ -19,6 +20,7 @@ steps:
       - |
         echo "PROJECT_ID   : ${PROJECT_ID}"
         echo "_TARGETS     : ${_TARGETS}"
+        echo "_ACTION      : ${_ACTION}"
         echo "_PROGRESS_URL: ${_PROGRESS_URL:-<empty>}"
         echo "BRANCH       : ${BRANCH_NAME:-n/a}"
         echo "SHORT_SHA    : ${SHORT_SHA:-n/a}"
@@ -44,12 +46,18 @@ steps:
       - -c
       - |
         if [[ ",${_TARGETS}," == *",frontend,"* ]]; then
-          echo "=== FRONTEND selected ==="
-          echo "[frontend] building..."
-          sleep 10
-          echo "[frontend] deploying..."
-          sleep 10
-          echo "[frontend] done."
+          echo "=== FRONTEND selected (action: ${_ACTION}) ==="
+          if [ "${_ACTION}" = "remove_app" ]; then
+            echo "[frontend] removing..."
+            sleep 10
+            echo "[frontend] removed."
+          else
+            echo "[frontend] building..."
+            sleep 10
+            echo "[frontend] deploying..."
+            sleep 10
+            echo "[frontend] done."
+          fi
         else
           echo "skip frontend"
         fi
@@ -86,12 +94,18 @@ steps:
       - -c
       - |
         if [[ ",${_TARGETS}," == *",backend,"* ]]; then
-          echo "=== BACKEND selected ==="
-          echo "[backend] building..."
-          sleep 12
-          echo "[backend] deploying..."
-          sleep 12
-          echo "[backend] done."
+          echo "=== BACKEND selected (action: ${_ACTION}) ==="
+          if [ "${_ACTION}" = "remove_app" ]; then
+            echo "[backend] removing..."
+            sleep 12
+            echo "[backend] removed."
+          else
+            echo "[backend] building..."
+            sleep 12
+            echo "[backend] deploying..."
+            sleep 12
+            echo "[backend] done."
+          fi
         else
           echo "skip backend"
         fi
@@ -128,12 +142,18 @@ steps:
       - -c
       - |
         if [[ ",${_TARGETS}," == *",gitea,"* ]]; then
-          echo "=== GITEA selected ==="
-          echo "[gitea] setup..."
-          sleep 8
-          echo "[gitea] finishing..."
-          sleep 8
-          echo "[gitea] done."
+          echo "=== GITEA selected (action: ${_ACTION}) ==="
+          if [ "${_ACTION}" = "remove_app" ]; then
+            echo "[gitea] removing..."
+            sleep 8
+            echo "[gitea] removed."
+          else
+            echo "[gitea] setup..."
+            sleep 8
+            echo "[gitea] finishing..."
+            sleep 8
+            echo "[gitea] done."
+          fi
         else
           echo "skip gitea"
         fi
@@ -170,12 +190,18 @@ steps:
       - -c
       - |
         if [[ ",${_TARGETS}," == *",confluence,"* ]]; then
-          echo "=== CONFLUENCE selected ==="
-          echo "[confluence] setup..."
-          sleep 8
-          echo "[confluence] finishing..."
-          sleep 8
-          echo "[confluence] done."
+          echo "=== CONFLUENCE selected (action: ${_ACTION}) ==="
+          if [ "${_ACTION}" = "remove_app" ]; then
+            echo "[confluence] removing..."
+            sleep 8
+            echo "[confluence] removed."
+          else
+            echo "[confluence] setup..."
+            sleep 8
+            echo "[confluence] finishing..."
+            sleep 8
+            echo "[confluence] done."
+          fi
         else
           echo "skip confluence"
         fi
@@ -212,12 +238,18 @@ steps:
       - -c
       - |
         if [[ ",${_TARGETS}," == *",jira,"* ]]; then
-          echo "=== JIRA selected ==="
-          echo "[jira] setup..."
-          sleep 8
-          echo "[jira] finishing..."
-          sleep 8
-          echo "[jira] done."
+          echo "=== JIRA selected (action: ${_ACTION}) ==="
+          if [ "${_ACTION}" = "remove_app" ]; then
+            echo "[jira] removing..."
+            sleep 8
+            echo "[jira] removed."
+          else
+            echo "[jira] setup..."
+            sleep 8
+            echo "[jira] finishing..."
+            sleep 8
+            echo "[jira] done."
+          fi
         else
           echo "skip jira"
         fi
@@ -254,12 +286,18 @@ steps:
       - -c
       - |
         if [[ ",${_TARGETS}," == *",artifactory,"* ]]; then
-          echo "=== ARTIFACTORY selected ==="
-          echo "[artifactory] building..."
-          sleep 9
-          echo "[artifactory] deploying..."
-          sleep 9
-          echo "[artifactory] done."
+          echo "=== ARTIFACTORY selected (action: ${_ACTION}) ==="
+          if [ "${_ACTION}" = "remove_app" ]; then
+            echo "[artifactory] removing..."
+            sleep 9
+            echo "[artifactory] removed."
+          else
+            echo "[artifactory] building..."
+            sleep 9
+            echo "[artifactory] deploying..."
+            sleep 9
+            echo "[artifactory] done."
+          fi
         else
           echo "skip artifactory"
         fi
@@ -296,12 +334,18 @@ steps:
       - -c
       - |
         if [[ ",${_TARGETS}," == *",github,"* ]]; then
-          echo "=== GITHUB selected ==="
-          echo "[github] building..."
-          sleep 9
-          echo "[github] deploying..."
-          sleep 9
-          echo "[github] done."
+          echo "=== GITHUB selected (action: ${_ACTION}) ==="
+          if [ "${_ACTION}" = "remove_app" ]; then
+            echo "[github] removing..."
+            sleep 9
+            echo "[github] removed."
+          else
+            echo "[github] building..."
+            sleep 9
+            echo "[github] deploying..."
+            sleep 9
+            echo "[github] done."
+          fi
         else
           echo "skip github"
         fi
