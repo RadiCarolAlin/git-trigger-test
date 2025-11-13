@@ -65,7 +65,6 @@ steps:
         else
           echo "skip frontend"
         fi
-    waitFor: ['notify-frontend-start']
 
   - id: notify-frontend-done
     name: curlimages/curl
@@ -90,7 +89,7 @@ steps:
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",backend,"; then
           curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=backend&status=START" || true
         fi
-    waitFor: ['frontend']
+    waitFor: ['notify-frontend-done']
 
   - id: backend
     name: gcr.io/cloud-builders/gcloud
@@ -114,7 +113,6 @@ steps:
         else
           echo "skip backend"
         fi
-    waitFor: ['notify-backend-start']
 
   - id: notify-backend-done
     name: curlimages/curl
@@ -139,7 +137,7 @@ steps:
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",gitea,"; then
           curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=gitea&status=START" || true
         fi
-    waitFor: ['backend']
+    waitFor: ['notify-backend-done']
 
   - id: gitea
     name: gcr.io/cloud-builders/gcloud
@@ -163,7 +161,6 @@ steps:
         else
           echo "skip gitea"
         fi
-    waitFor: ['notify-gitea-start']
 
   - id: notify-gitea-done
     name: curlimages/curl
@@ -188,7 +185,7 @@ steps:
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",confluence,"; then
           curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=confluence&status=START" || true
         fi
-    waitFor: ['gitea']
+    waitFor: ['notify-gitea-done']
 
   - id: confluence
     name: gcr.io/cloud-builders/gcloud
@@ -212,7 +209,6 @@ steps:
         else
           echo "skip confluence"
         fi
-    waitFor: ['notify-confluence-start']
 
   - id: notify-confluence-done
     name: curlimages/curl
@@ -237,7 +233,7 @@ steps:
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",jira,"; then
           curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=jira&status=START" || true
         fi
-    waitFor: ['confluence']
+    waitFor: ['notify-confluence-done']
 
   - id: jira
     name: gcr.io/cloud-builders/gcloud
@@ -261,7 +257,6 @@ steps:
         else
           echo "skip jira"
         fi
-    waitFor: ['notify-jira-start']
 
   - id: notify-jira-done
     name: curlimages/curl
@@ -286,7 +281,7 @@ steps:
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",artifactory,"; then
           curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=artifactory&status=START" || true
         fi
-    waitFor: ['jira']
+    waitFor: ['notify-jira-done']
 
   - id: artifactory
     name: gcr.io/cloud-builders/gcloud
@@ -310,7 +305,6 @@ steps:
         else
           echo "skip artifactory"
         fi
-    waitFor: ['notify-artifactory-start']
 
   - id: notify-artifactory-done
     name: curlimages/curl
@@ -335,7 +329,7 @@ steps:
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",github,"; then
           curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=github&status=START" || true
         fi
-    waitFor: ['artifactory']
+    waitFor: ['notify-artifactory-done']
 
   - id: github
     name: gcr.io/cloud-builders/gcloud
@@ -359,7 +353,6 @@ steps:
         else
           echo "skip github"
         fi
-    waitFor: ['notify-github-start']
 
   - id: notify-github-done
     name: curlimages/curl
