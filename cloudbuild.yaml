@@ -39,7 +39,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",frontend,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=frontend&status=START" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=frontend&status=START" || true
         fi
     waitFor: ['-']
 
@@ -73,7 +73,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",frontend,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=frontend&status=DONE" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=frontend&status=DONE" || true
         fi
     waitFor: ['frontend']
 
@@ -87,7 +87,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",backend,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=backend&status=START" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=backend&status=START" || true
         fi
     waitFor: ['notify-frontend-done']
 
@@ -121,7 +121,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",backend,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=backend&status=DONE" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=backend&status=DONE" || true
         fi
     waitFor: ['backend']
 
@@ -135,7 +135,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",gitea,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=gitea&status=START" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=gitea&status=START" || true
         fi
     waitFor: ['notify-backend-done']
 
@@ -169,7 +169,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",gitea,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=gitea&status=DONE" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=gitea&status=DONE" || true
         fi
     waitFor: ['gitea']
 
@@ -183,7 +183,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",confluence,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=confluence&status=START" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=confluence&status=START" || true
         fi
     waitFor: ['notify-gitea-done']
 
@@ -217,7 +217,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",confluence,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=confluence&status=DONE" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=confluence&status=DONE" || true
         fi
     waitFor: ['confluence']
 
@@ -231,7 +231,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",jira,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=jira&status=START" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=jira&status=START" || true
         fi
     waitFor: ['notify-confluence-done']
 
@@ -265,7 +265,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",jira,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=jira&status=DONE" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=jira&status=DONE" || true
         fi
     waitFor: ['jira']
 
@@ -279,7 +279,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",artifactory,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=artifactory&status=START" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=artifactory&status=START" || true
         fi
     waitFor: ['notify-jira-done']
 
@@ -313,7 +313,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",artifactory,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=artifactory&status=DONE" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=artifactory&status=DONE" || true
         fi
     waitFor: ['artifactory']
 
@@ -327,7 +327,7 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",github,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=github&status=START" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=github&status=START" || true
         fi
     waitFor: ['notify-artifactory-done']
 
@@ -361,6 +361,6 @@ steps:
       - -c
       - |
         if [ -n "${_PROGRESS_URL}" ] && echo ",${_TARGETS}," | grep -q ",github,"; then
-          curl -sS -m 2 -X POST "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=github&status=DONE" || true
+          curl -sS -m 2 -X POST -H "Content-Length: 0" "${_PROGRESS_URL}/progress?op=${BUILD_ID}&step=github&status=DONE" || true
         fi
     waitFor: ['github']
