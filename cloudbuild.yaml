@@ -8,7 +8,7 @@ options:
 substitutions:
   _TARGETS: "frontend,backend"
   _ACTION: "deploy_platform"  # deploy_platform | add_app | remove_app
-  _PROGRESS_URL: "http://34.36.238.69"
+  _PROGRESS_URL: "https://deployment-tenant.sandbox.auence.com"
   _NAMESPACE: "default"  # Platform namespace/name
   _USER_EMAIL: "user@example.com"  # User email
 
